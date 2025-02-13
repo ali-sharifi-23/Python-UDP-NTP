@@ -1,7 +1,7 @@
 import time
 import struct
 import threading
-import time 
+import time
 import numpy as np
 import multiprocessing
 import subprocess
@@ -17,11 +17,11 @@ def adjtSpeed(tick):
     
 def setClock(time_sec, time_usec):
     '''A function that calls a custo C program that sets the current time'''
-    subprocess.Popen(['sudo', '/home/pi/aras_vio_end_effector/python-udp-ntp/setclock', f'{time_sec}', f'{time_usec}'],stdout=subprocess.PIPE)
+    subprocess.Popen(['sudo', './setclock', f'{time_sec}', f'{time_usec}'],stdout=subprocess.PIPE)
     
 class udpNtpClient():
     '''A class that implements the NTP client with serial interface. This has been tested with SiK serial radio modules'''
-    def __init__(self, tr_scale = 0.5, server_port = 10000, server_ip = '192.168.1.2', local_port = 6000,
+    def __init__(self, tr_scale = 0.5, server_port = 10000, server_ip = '192.168.1.9', local_port = 6000,
                                        transmit_rate = 2, record = False, plot = True):
         '''
         The constructor of the class. With this, the NTP also starts
@@ -39,6 +39,7 @@ class udpNtpClient():
         @param: plot:
         Do we want a plot of the skew over time (for debugging)
         '''
+        print("NTP Client initialized")
         self.transmit_rate = transmit_rate #The frequency of running the NTP stack (Querying time from the Server)
         self.link = wifiDataLink(server_ip, server_port, local_port)      
         self.record = record
@@ -58,12 +59,17 @@ class udpNtpClient():
         
     def receivingThread(self):
         '''A thread that handles the responses from the server'''
+        print("Receiving thread started")
         while self.running:
             data, addr = self.link.getData(24)
+            print(f"Received data: {data} from {addr}")
             if len(data) == 24:
                 self.stamp4 = time.time_ns() #Response time stamp
                 self.stamp1, self.stamp2, self.stamp3 = struct.unpack('3Q',data)
-                #compute the round trip time 
+                # print(self.stamp1)
+                # print(self.stamp2)
+                # print(self.stamp3)
+                #compute the round trip time
                 #(the time that takes for the packet to get to the server and for the response to be received)
                 delta = np.array((self.stamp4-self.stamp1)-(self.stamp3-self.stamp2))
                 #The estimated server time at the instance of receiving the response from the server (stamp4)
@@ -105,6 +111,7 @@ class udpNtpClient():
                     self.dataset.append([self.stamp1, self.stamp2, self.stamp3, self.stamp4])
                 
     def queryThreadFunc(self):
+        print("Query thread started")
         '''A thread that periodically transmits requests to the server '''
         while self.running:
             self.link.transmitData([time.time_ns()], format = 'Q')
@@ -116,4 +123,4 @@ class udpNtpClient():
 #         self.transmitTread.join()
         self.link.socket.close()
         
-client = udpNtpClient(tr_scale = 0.41499400826162136)
+client = udpNtpClient(tr_scale = 0.6)
