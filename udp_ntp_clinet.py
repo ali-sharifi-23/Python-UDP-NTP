@@ -7,21 +7,26 @@ import multiprocessing
 import subprocess
 from src.utils import *
 
+offset = int(1e14)
+password = 'a'
+
 def adjtSpeed(tick):
     '''A fuction that calls the adjtimex system command (install is with apt-get) to slow down or speed up the clock.'''
     if tick > 10:
         tick = 10
     elif tick <-10:
-        tick = -10        
-    subprocess.Popen(['sudo', '/sbin/adjtimex', f'-t', f'{10000+tick}'],stdout=subprocess.PIPE)
+        tick = -10
+    command = f"echo {password} | sudo -S /sbin/adjtimex -t {10000 + tick}"
+    subprocess.run(command,shell=True)
     
 def setClock(time_sec, time_usec):
     '''A function that calls a custo C program that sets the current time'''
-    subprocess.Popen(['sudo', './setclock', f'{time_sec}', f'{time_usec}'],stdout=subprocess.PIPE)
+    command = f"echo {password} | sudo -S ./setclock {time_sec} {time_usec}"
+    subprocess.run(command,shell=True)
     
 class udpNtpClient():
     '''A class that implements the NTP client with serial interface. This has been tested with SiK serial radio modules'''
-    def __init__(self, tr_scale = 0.5, server_port = 10000, server_ip = '192.168.1.9', local_port = 6000,
+    def __init__(self, tr_scale, server_port = 10000, server_ip = '192.168.1.9', local_port = 6000,
                                        transmit_rate = 2, record = False, plot = True):
         '''
         The constructor of the class. With this, the NTP also starts
@@ -39,9 +44,8 @@ class udpNtpClient():
         @param: plot:
         Do we want a plot of the skew over time (for debugging)
         '''
-        print("NTP Client initialized")
         self.transmit_rate = transmit_rate #The frequency of running the NTP stack (Querying time from the Server)
-        self.link = wifiDataLink(server_ip, server_port, local_port)      
+        self.link = wifiDataLink(server_ip, server_port, local_port)
         self.record = record
         self.running = True
         self.plot = plot
@@ -59,16 +63,18 @@ class udpNtpClient():
         
     def receivingThread(self):
         '''A thread that handles the responses from the server'''
-        print("Receiving thread started")
         while self.running:
             data, addr = self.link.getData(24)
-            print(f"Received data: {data} from {addr}")
+            print(f"Received data from {addr}")
             if len(data) == 24:
                 self.stamp4 = time.time_ns() #Response time stamp
                 self.stamp1, self.stamp2, self.stamp3 = struct.unpack('3Q',data)
-                # print(self.stamp1)
-                # print(self.stamp2)
-                # print(self.stamp3)
+                self.stamp2 = self.stamp2 + offset
+                self.stamp3 = self.stamp3 + offset
+                print(self.stamp1)
+                print(self.stamp2)
+                print(self.stamp3)
+                print(self.stamp4)
                 #compute the round trip time
                 #(the time that takes for the packet to get to the server and for the response to be received)
                 delta = np.array((self.stamp4-self.stamp1)-(self.stamp3-self.stamp2))
@@ -123,4 +129,4 @@ class udpNtpClient():
 #         self.transmitTread.join()
         self.link.socket.close()
         
-client = udpNtpClient(tr_scale = 0.6)
+client = udpNtpClient(tr_scale = 0.3)
