@@ -7,7 +7,6 @@ import multiprocessing
 import subprocess
 from src.utils import *
 
-offset = int(1e14)
 password = 'a'
 
 def adjtSpeed(tick):
@@ -69,8 +68,8 @@ class udpNtpClient():
             if len(data) == 24:
                 self.stamp4 = time.time_ns() #Response time stamp
                 self.stamp1, self.stamp2, self.stamp3 = struct.unpack('3Q',data)
-                self.stamp2 = self.stamp2 + offset
-                self.stamp3 = self.stamp3 + offset
+                self.stamp2 = self.stamp2
+                self.stamp3 = self.stamp3
                 print(self.stamp1)
                 print(self.stamp2)
                 print(self.stamp3)
@@ -129,4 +128,4 @@ class udpNtpClient():
 #         self.transmitTread.join()
         self.link.socket.close()
         
-client = udpNtpClient(tr_scale = 0.3)
+client = udpNtpClient(tr_scale = 0.7)
