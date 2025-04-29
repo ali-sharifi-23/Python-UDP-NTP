@@ -128,4 +128,4 @@ class udpNtpClient():
 #         self.transmitTread.join()
         self.link.socket.close()
         
-client = udpNtpClient(tr_scale = 0.7)
+client = udpNtpClient(tr_scale = 1.2)
