@@ -25,7 +25,7 @@ def setClock(time_sec, time_usec):
     
 class udpNtpClient():
     '''A class that implements the NTP client with serial interface. This has been tested with SiK serial radio modules'''
-    def __init__(self, tr_scale, server_port = 10000, server_ip = '192.168.1.9', local_port = 6000,
+    def __init__(self, tr_scale, server_port = 5000, server_ip = '192.168.1.114', local_port = 6000,
                                        transmit_rate = 2, record = False, plot = True):
         '''
         The constructor of the class. With this, the NTP also starts
