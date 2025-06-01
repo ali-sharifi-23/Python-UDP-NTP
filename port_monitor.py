@@ -7,9 +7,13 @@ import sys
 
 firstData = False
 
+udp_dir = "/home/ali/Github/aras_ir_tracker/stereo_camera_process"
+script_name = "stereo_tracker_3d.py"
+config_name = "sample_config.yaml"
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(('0.0.0.0', 5500))
-udpPath = "/home/ali/Github/aras_ir_tracker/udp_aggregator/udp_aggregator.py"
+
 timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M')
 with open(f"Dataset_{timestamp}.csv", "a", newline='') as file:
     writer = csv.writer(file)
@@ -19,7 +23,7 @@ with open(f"Dataset_{timestamp}.csv", "a", newline='') as file:
         data, addr = sock.recvfrom(1024)
         if not firstData:
             firstData = True
-            p = subprocess.Popen(["python3", udpPath], stdout=sys.stdout, stderr=sys.stderr)
+            subprocess.Popen(["gnome-terminal", "--", "bash", "-c",f"cd {udp_dir} && python3 {script_name} {config_name}; exec bash"])
         try:
             str1, str2, str3, str4, str5 = struct.unpack('3i2Q', data)
             sender_ip, sender_port = addr
